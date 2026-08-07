@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worktree-warden"
+version = "0.1.0"
+description = "Discover Git worktrees under a root path"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "rwrife" }]
+dependencies = []
+
+[project.scripts]
+worktree-warden = "worktree_warden.cli:main"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

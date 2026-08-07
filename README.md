@@ -75,4 +75,10 @@ Before deleting a worktree, `worktree-warden` should verify configurable guardra
 
 ## Status
 
-Project scaffold created by auto tool-lab. Core implementation is tracked in issues.
+Initial implementation now includes:
+
+- `worktree-warden scan --root <path>` recursive discovery,
+- porcelain parser support for branch, detached, and bare records,
+- unit/integration tests for parser and nested-repo discovery.
+
+Remaining milestones are tracked in GitHub issues.
