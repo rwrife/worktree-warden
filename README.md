@@ -51,6 +51,9 @@ worktree-warden scan --root ~/repos
 # discover with machine-readable output
 worktree-warden scan --root ~/repos --json
 
+# optional metadata file override (defaults to <root>/.worktree-warden/metadata.json)
+worktree-warden scan --root ~/repos --state-file ~/.local/state/worktree-warden/metadata.json
+
 # preview what would be deleted after 21 days
 worktree-warden purge --root ~/repos --ttl-days 21 --dry-run
 
@@ -79,6 +82,7 @@ Initial implementation now includes:
 
 - `worktree-warden scan --root <path>` recursive discovery,
 - porcelain parser support for branch, detached, and bare records,
-- unit/integration tests for parser and nested-repo discovery.
+- persistent metadata store for `first_seen_at`, `last_seen_at`, and `last_activity_at`,
+- unit/integration tests for parser, nested-repo discovery, and metadata idempotency.
 
 Remaining milestones are tracked in GitHub issues.
