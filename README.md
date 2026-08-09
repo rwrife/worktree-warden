@@ -34,7 +34,7 @@ Manual cleanup is error-prone and easy to postpone. `worktree-warden` makes clea
 
 - Recursive discovery from a root path.
 - Worktree inventory export (table + JSON).
-- TTL policy (`--ttl-days X`) based on creation time.
+- TTL policy (`--ttl-days X`) based on first-seen UTC metadata with branch/path exclusions.
 - Safe purge with:
   - `--dry-run`
   - skip protected branches (`main`, `master`, `release/*`)
@@ -50,6 +50,14 @@ worktree-warden scan --root ~/repos
 
 # discover with machine-readable output
 worktree-warden scan --root ~/repos --json
+
+# evaluate TTL eligibility while excluding protected branches and paths
+worktree-warden scan --root ~/repos --ttl-days 21 \
+  --exclude-branch main \
+  --exclude-branch 'release/*' \
+  --path-allowlist '~/repos/*' \
+  --path-denylist '*archive*' \
+  --json
 
 # optional metadata file override (defaults to <root>/.worktree-warden/metadata.json)
 worktree-warden scan --root ~/repos --state-file ~/.local/state/worktree-warden/metadata.json
@@ -83,6 +91,7 @@ Initial implementation now includes:
 - `worktree-warden scan --root <path>` recursive discovery,
 - porcelain parser support for branch, detached, and bare records,
 - persistent metadata store for `first_seen_at`, `last_seen_at`, and `last_activity_at`,
+- TTL evaluator with UTC day-boundary logic and branch/path exclusions,
 - unit/integration tests for parser, nested-repo discovery, and metadata idempotency.
 
 Remaining milestones are tracked in GitHub issues.

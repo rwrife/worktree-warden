@@ -17,6 +17,9 @@ class WorktreeRecord:
     first_seen_at: str | None = None
     last_seen_at: str | None = None
     last_activity_at: str | None = None
+    age_days: int | None = None
+    purge_eligible: bool = False
+    purge_block_reason: str | None = None
     extra: dict[str, str] = field(default_factory=dict)
 
     @property

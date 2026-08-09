@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .models import WorktreeRecord
 from .parser import parse_worktree_porcelain
+from .policy import TtlPolicy, apply_ttl_policy
 
 _METADATA_DIRNAME = ".worktree-warden"
 _METADATA_FILENAME = "metadata.json"
@@ -156,6 +157,7 @@ def discover_worktrees(
     *,
     metadata_store_path: Path | None = None,
     now: datetime | None = None,
+    ttl_policy: TtlPolicy | None = None,
 ) -> list[WorktreeRecord]:
     """Discover repos recursively and return normalized worktree records."""
     resolved_root = root.expanduser().resolve()
@@ -181,10 +183,14 @@ def discover_worktrees(
     discovered.sort(key=lambda r: (str(r.repo_path), str(r.path)))
 
     effective_metadata_store = metadata_store_path or _default_metadata_store_path(resolved_root)
+    effective_now = now or _utc_now()
     _apply_persistent_metadata(
         discovered,
         metadata_store_path=effective_metadata_store,
-        now=now or _utc_now(),
+        now=effective_now,
     )
+
+    if ttl_policy is not None:
+        apply_ttl_policy(discovered, policy=ttl_policy, now=effective_now)
 
     return discovered
