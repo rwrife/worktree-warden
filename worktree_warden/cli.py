@@ -13,6 +13,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     scan = subparsers.add_parser("scan", help="Discover worktrees under a root path")
     scan.add_argument("--root", required=True, help="Root directory to scan")
+    scan.add_argument("--state-file", help="Optional metadata store path")
     scan.add_argument("--json", action="store_true", help="Output JSON")
 
     return parser
@@ -30,7 +31,14 @@ def main() -> None:
     args = _build_parser().parse_args()
 
     if args.command == "scan":
-        records = [r.to_dict() for r in discover_worktrees(Path(args.root))]
+        state_file = Path(args.state_file) if args.state_file else None
+        records = [
+            r.to_dict()
+            for r in discover_worktrees(
+                Path(args.root),
+                metadata_store_path=state_file,
+            )
+        ]
         if args.json:
             print(json.dumps(records, indent=2))
         else:

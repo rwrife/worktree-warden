@@ -14,6 +14,9 @@ class WorktreeRecord:
     bare: bool = False
     locked_reason: str | None = None
     prunable_reason: str | None = None
+    first_seen_at: str | None = None
+    last_seen_at: str | None = None
+    last_activity_at: str | None = None
     extra: dict[str, str] = field(default_factory=dict)
 
     @property

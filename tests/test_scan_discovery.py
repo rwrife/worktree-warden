@@ -75,3 +75,8 @@ def test_scan_cli_json_output(tmp_path: Path) -> None:
     payload = json.loads(result.stdout)
     paths = {Path(item["path"]).resolve() for item in payload}
     assert repo.resolve() in paths
+
+    repo_row = next(item for item in payload if Path(item["path"]).resolve() == repo.resolve())
+    assert repo_row["first_seen_at"].endswith("Z")
+    assert repo_row["last_seen_at"].endswith("Z")
+    assert repo_row["last_activity_at"].endswith("Z")
