@@ -38,11 +38,12 @@ Manual cleanup is error-prone and easy to postpone. `worktree-warden` makes clea
 - Safe purge with:
   - `--dry-run`
   - skip protected branches (`main`, `master`, `release/*`)
-  - optional skip when unmerged changes exist
+  - skip dirty worktrees unless `--force`
+  - path safety checks under allowed roots
 - Optional scheduled cleanup mode.
 - Optional trash/recycle-bin mode (platform-dependent) before hard delete.
 
-## How to use (planned CLI)
+## How to use
 
 ```bash
 # discover worktrees
@@ -67,6 +68,9 @@ worktree-warden purge --root ~/repos --ttl-days 21 --dry-run
 
 # perform cleanup
 worktree-warden purge --root ~/repos --ttl-days 21
+
+# force-remove dirty worktrees that pass other guardrails
+worktree-warden purge --root ~/repos --ttl-days 21 --force
 ```
 
 ## Safety model
@@ -92,6 +96,7 @@ Initial implementation now includes:
 - porcelain parser support for branch, detached, and bare records,
 - persistent metadata store for `first_seen_at`, `last_seen_at`, and `last_activity_at`,
 - TTL evaluator with UTC day-boundary logic and branch/path exclusions,
-- unit/integration tests for parser, nested-repo discovery, and metadata idempotency.
+- safe purge pipeline with dry-run, protected-branch rejection, dirty-worktree checks, and allowed-root enforcement,
+- unit/integration tests for parser, nested-repo discovery, metadata idempotency, and purge guardrails.
 
 Remaining milestones are tracked in GitHub issues.
