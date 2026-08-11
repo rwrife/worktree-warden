@@ -33,7 +33,7 @@ Manual cleanup is error-prone and easy to postpone. `worktree-warden` makes clea
 ## Features (MVP target)
 
 - Recursive discovery from a root path.
-- Worktree inventory export (table + JSON).
+- Worktree inventory export (table + JSON) via `scan` and `report`.
 - TTL policy (`--ttl-days X`) based on first-seen UTC metadata with branch/path exclusions.
 - Safe purge with:
   - `--dry-run`
@@ -51,6 +51,9 @@ worktree-warden scan --root ~/repos
 
 # discover with machine-readable output
 worktree-warden scan --root ~/repos --json
+
+# generate a versioned JSON inventory report
+worktree-warden report --root ~/repos --json
 
 # evaluate TTL eligibility while excluding protected branches and paths
 worktree-warden scan --root ~/repos --ttl-days 21 \
@@ -72,6 +75,21 @@ worktree-warden purge --root ~/repos --ttl-days 21
 # force-remove dirty worktrees that pass other guardrails
 worktree-warden purge --root ~/repos --ttl-days 21 --force
 ```
+
+## CLI contract
+
+### Exit codes
+
+- `0`: command completed successfully.
+- `1`: runtime failure (for example git invocation errors or invalid runtime policy values).
+- `2`: CLI usage/argument error (argparse semantics).
+- `3`: purge completed but one or more eligible removals failed (`action=error` present in output).
+
+### JSON schema
+
+- `scan --json` emits a raw array of worktree records.
+- `report --json` emits a versioned envelope with `schema_version`, `kind`, `root`, and `records`.
+- Current schema docs: [`docs/json-schema.md`](docs/json-schema.md) (version `1`).
 
 ## Safety model
 
@@ -97,6 +115,8 @@ Initial implementation now includes:
 - persistent metadata store for `first_seen_at`, `last_seen_at`, and `last_activity_at`,
 - TTL evaluator with UTC day-boundary logic and branch/path exclusions,
 - safe purge pipeline with dry-run, protected-branch rejection, dirty-worktree checks, and allowed-root enforcement,
+- `report` command with a versioned JSON envelope,
+- documented CLI exit code semantics for automation,
 - unit/integration tests for parser, nested-repo discovery, metadata idempotency, and purge guardrails.
 
 Remaining milestones are tracked in GitHub issues.
