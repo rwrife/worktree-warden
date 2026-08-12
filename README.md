@@ -74,7 +74,48 @@ worktree-warden purge --root ~/repos --ttl-days 21
 
 # force-remove dirty worktrees that pass other guardrails
 worktree-warden purge --root ~/repos --ttl-days 21 --force
+
+# append structured JSONL audit events for each purge decision
+worktree-warden purge --root ~/repos --ttl-days 21 \
+  --audit-log ~/.local/state/worktree-warden/purge-audit.jsonl \
+  --json
 ```
+
+## Scheduled cleanup (automation + audit trail)
+
+Use your OS scheduler to run `purge` on a cadence and append structured audit events.
+
+### Linux/macOS (`cron`) example
+
+Run every day at 03:15 local time:
+
+```cron
+15 3 * * * /usr/bin/env bash -lc 'worktree-warden purge --root ~/repos --ttl-days 21 --audit-log ~/.local/state/worktree-warden/purge-audit.jsonl --json'
+```
+
+### Windows Task Scheduler example
+
+Program/script:
+
+```text
+powershell.exe
+```
+
+Arguments:
+
+```text
+-NoProfile -Command "worktree-warden purge --root $HOME/repos --ttl-days 21 --audit-log $HOME/.worktree-warden/purge-audit.jsonl --json"
+```
+
+### Audit log shape
+
+Each audit line is JSON (`.jsonl`) and includes run metadata plus the individual purge decision:
+
+- `record.path`: worktree path
+- `record.action`: `removed`, `would-remove`, `skipped`, or `error`
+- `record.reason`: skip/failure reason (for example `protected-branch`, `dirty-worktree`)
+
+This gives operations-friendly logs that explicitly show deleted paths and skip reasons for every run.
 
 ## CLI contract
 
