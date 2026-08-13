@@ -4,6 +4,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 
 def _run(cmd: list[str], cwd: Path) -> None:
@@ -51,6 +52,23 @@ def _purge_json(project_root: Path, *args: str) -> list[dict[str, object]]:
 def _entry_for_path(payload: list[dict[str, object]], target: Path) -> dict[str, object]:
     resolved_target = target.resolve()
     return next(item for item in payload if Path(str(item["path"])).resolve() == resolved_target)
+
+
+def _read_audit_events(audit_log_path: Path) -> list[dict[str, Any]]:
+    return [
+        json.loads(line)
+        for line in audit_log_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def _audit_event_for_path(events: list[dict[str, Any]], target: Path) -> dict[str, Any]:
+    resolved_target = target.resolve()
+    for event in events:
+        record = cast(dict[str, Any], event["record"])
+        if Path(str(record["path"])).resolve() == resolved_target:
+            return event
+    raise AssertionError(f"No audit event found for {resolved_target}")
 
 
 def test_purge_dry_run_previews_actions_without_deleting(tmp_path: Path) -> None:
@@ -146,3 +164,53 @@ def test_purge_respects_protected_branch_and_allowed_root_guardrails(tmp_path: P
     assert outside_entry["action"] == "skipped"
     assert outside_entry["reason"] == "path-outside-allowed-root"
     assert outside_worktree.exists()
+
+
+def test_purge_audit_log_captures_removed_paths_and_skip_reasons(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    root = tmp_path / "root"
+    repo = root / "repo"
+    _init_repo(repo)
+
+    removable_worktree = _create_worktree(
+        repo,
+        branch="feature/removable",
+        path=root / "worktrees" / "removable",
+    )
+    protected_worktree = _create_worktree(
+        repo,
+        branch="release/1.0",
+        path=root / "worktrees" / "release-1-0",
+    )
+    audit_log_path = tmp_path / "logs" / "purge-audit.jsonl"
+
+    _purge_json(
+        project_root,
+        "--root",
+        str(root),
+        "--ttl-days",
+        "0",
+        "--audit-log",
+        str(audit_log_path),
+    )
+
+    events = _read_audit_events(audit_log_path)
+    removable_event = _audit_event_for_path(events, removable_worktree)
+    protected_event = _audit_event_for_path(events, protected_worktree)
+    removable_record = cast(dict[str, Any], removable_event["record"])
+    protected_record = cast(dict[str, Any], protected_event["record"])
+
+    assert removable_event["kind"] == "worktree-warden.purge.audit"
+    assert removable_record["action"] == "removed"
+    assert removable_record["reason"] is None
+    assert removable_record["path"] == str(removable_worktree)
+
+    assert protected_event["kind"] == "worktree-warden.purge.audit"
+    assert protected_record["action"] == "skipped"
+    assert protected_record["reason"] == "protected-branch"
+    assert protected_record["path"] == str(protected_worktree)
+
+    assert all("executed_at" in event for event in events)
+    assert all(event["root"] == str(root.resolve()) for event in events)
+    assert not removable_worktree.exists()
+    assert protected_worktree.exists()

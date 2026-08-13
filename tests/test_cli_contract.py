@@ -66,6 +66,7 @@ def test_subcommand_help_documents_required_flags() -> None:
     assert "--root" in purge_help.stdout
     assert "--ttl-days" in purge_help.stdout
     assert "--dry-run" in purge_help.stdout
+    assert "--audit-log" in purge_help.stdout
 
 
 def test_report_json_uses_versioned_envelope(tmp_path: Path) -> None:

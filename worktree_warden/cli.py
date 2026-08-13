@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import sys
 from pathlib import Path
@@ -89,6 +90,10 @@ def _build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Additional allowed root path for purge safety checks (repeatable)",
     )
+    purge.add_argument(
+        "--audit-log",
+        help="Append structured JSONL purge audit events to this file",
+    )
     purge.add_argument("--json", action="store_true", help="Output JSON")
 
     return parser
@@ -165,6 +170,36 @@ def _build_report_payload(root: Path, records: list[dict[str, object]]) -> dict[
     }
 
 
+def _append_purge_audit_log(
+    audit_log_path: Path,
+    *,
+    root: Path,
+    ttl_days: int,
+    dry_run: bool,
+    force: bool,
+    records: list[dict[str, object]],
+) -> None:
+    resolved_root = root.expanduser().resolve()
+    resolved_log_path = audit_log_path.expanduser().resolve()
+    resolved_log_path.parent.mkdir(parents=True, exist_ok=True)
+    executed_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    with resolved_log_path.open("a", encoding="utf-8") as handle:
+        for record in records:
+            event = {
+                "schema_version": REPORT_SCHEMA_VERSION,
+                "kind": "worktree-warden.purge.audit",
+                "executed_at": executed_at,
+                "root": str(resolved_root),
+                "ttl_days": ttl_days,
+                "dry_run": dry_run,
+                "force": force,
+                "record": record,
+            }
+            handle.write(json.dumps(event, sort_keys=True))
+            handle.write("\n")
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -200,6 +235,16 @@ def run(argv: Sequence[str] | None = None) -> int:
                     allowed_roots=allowed_roots,
                 )
             ]
+
+            if args.audit_log:
+                _append_purge_audit_log(
+                    Path(args.audit_log),
+                    root=Path(args.root),
+                    ttl_days=args.ttl_days,
+                    dry_run=args.dry_run,
+                    force=args.force,
+                    records=records,
+                )
 
             if args.json:
                 print(json.dumps(records, indent=2))
