@@ -54,9 +54,10 @@ Build a reliable utility that identifies Git worktrees under a target root and p
 
 ## Quality gates
 
-- Unit tests for scanner, parser, policy evaluator.
-- Integration tests against temporary repos/worktrees.
+- Unit tests for scanner, parser, and policy evaluator (`pytest tests/test_parser.py tests/test_ttl_policy.py`).
+- Integration tests against temporary repos/worktrees, including dirty worktree and protected branch safety fixtures (`pytest tests/test_purge_pipeline.py`).
 - Deterministic fixture-based tests for TTL boundaries.
+- CI matrix runs the full pytest suite on Linux, macOS, and Windows.
 
 ## Open questions
 
