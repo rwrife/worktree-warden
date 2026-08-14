@@ -117,6 +117,28 @@ Each audit line is JSON (`.jsonl`) and includes run metadata plus the individual
 
 This gives operations-friendly logs that explicitly show deleted paths and skip reasons for every run.
 
+## Verification
+
+### Local verification
+
+```bash
+# full suite
+pytest
+
+# focused suites used for TTL + safety guardrails
+pytest tests/test_parser.py tests/test_ttl_policy.py tests/test_purge_pipeline.py
+```
+
+### CI baseline
+
+GitHub Actions runs the same pytest suite on:
+
+- `ubuntu-latest`
+- `macos-latest`
+- `windows-latest`
+
+See `.github/workflows/ci.yml`.
+
 ## CLI contract
 
 ### Exit codes
