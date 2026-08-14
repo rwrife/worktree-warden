@@ -15,7 +15,7 @@ branch refs/heads/main
     records = parse_worktree_porcelain(raw, repo_path=Path("/tmp/repo"))
     assert len(records) == 1
     rec = records[0]
-    assert rec.path == Path("/tmp/repo")
+    assert rec.path == Path("/tmp/repo").expanduser().resolve()
     assert rec.head == "abcdef1234567890"
     assert rec.branch_ref == "refs/heads/main"
     assert rec.branch == "main"
